@@ -1,0 +1,1393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GAMECOCK | GME Deep Investigation</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0a0f;
+            --bg-card: #12121a;
+            --bg-card-hover: #1a1a25;
+            --accent-red: #ff3b3b;
+            --accent-green: #00ff88;
+            --accent-blue: #3b82f6;
+            --accent-yellow: #fbbf24;
+            --accent-purple: #a855f7;
+            --text-primary: #ffffff;
+            --text-secondary: #9ca3af;
+            --text-muted: #6b7280;
+            --border: #2a2a3a;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background */
+        .bg-grid {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image:
+                linear-gradient(rgba(59, 130, 246, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(59, 130, 246, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, rgba(255, 59, 59, 0.1), rgba(168, 85, 247, 0.1));
+            border-bottom: 1px solid var(--border);
+            padding: 2rem;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.05), transparent);
+            animation: shimmer 3s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { transform: translateX(0); }
+            100% { transform: translateX(50%); }
+        }
+
+        .logo {
+            font-size: 3rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-red), var(--accent-purple));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -2px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+        }
+
+        .classification {
+            display: inline-block;
+            background: var(--accent-red);
+            color: white;
+            padding: 0.3rem 1rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-top: 1rem;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card:hover {
+            background: var(--bg-card-hover);
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+        }
+
+        .stat-card.critical {
+            border-color: var(--accent-red);
+            background: linear-gradient(135deg, rgba(255, 59, 59, 0.1), transparent);
+        }
+
+        .stat-card.warning {
+            border-color: var(--accent-yellow);
+            background: linear-gradient(135deg, rgba(251, 191, 36, 0.1), transparent);
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin: 0.5rem 0;
+            background: linear-gradient(135deg, var(--text-primary), var(--text-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-card.critical .stat-value {
+            background: linear-gradient(135deg, var(--accent-red), #ff6b6b);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stat-change {
+            font-size: 0.9rem;
+            color: var(--accent-green);
+        }
+
+        .stat-change.negative {
+            color: var(--accent-red);
+        }
+
+        /* Section */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .section-title .icon {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--accent-red);
+            border-radius: 8px;
+            font-size: 1rem;
+        }
+
+        /* Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2rem;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: linear-gradient(to bottom, var(--accent-red), var(--accent-purple), var(--accent-blue));
+        }
+
+        .timeline-item {
+            position: relative;
+            padding-bottom: 2rem;
+            padding-left: 1.5rem;
+        }
+
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: -2rem;
+            top: 0.5rem;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background: var(--accent-red);
+            border: 3px solid var(--bg-dark);
+            box-shadow: 0 0 20px var(--accent-red);
+        }
+
+        .timeline-item.critical::before {
+            background: var(--accent-red);
+            box-shadow: 0 0 30px var(--accent-red);
+            animation: glow 2s infinite;
+        }
+
+        @keyframes glow {
+            0%, 100% { box-shadow: 0 0 20px var(--accent-red); }
+            50% { box-shadow: 0 0 40px var(--accent-red), 0 0 60px var(--accent-red); }
+        }
+
+        .timeline-date {
+            font-size: 0.85rem;
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        .timeline-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0.25rem 0;
+        }
+
+        .timeline-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        .timeline-ftd {
+            display: inline-block;
+            background: rgba(255, 59, 59, 0.2);
+            color: var(--accent-red);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 0.5rem;
+        }
+
+        /* Data Table */
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .data-table th,
+        .data-table td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .data-table th {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .data-table tr:hover {
+            background: rgba(255,255,255,0.02);
+        }
+
+        .data-table .highlight {
+            background: rgba(255, 59, 59, 0.1);
+        }
+
+        .data-table .quantity {
+            font-family: 'SF Mono', monospace;
+            font-weight: 600;
+            color: var(--accent-red);
+        }
+
+        .data-table .price {
+            color: var(--accent-green);
+        }
+
+        /* Chart container */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 1rem 0;
+        }
+
+        /* Red Flag */
+        .red-flag {
+            display: flex;
+            align-items: flex-start;
+            gap: 1rem;
+            padding: 1.5rem;
+            background: rgba(255, 59, 59, 0.1);
+            border: 1px solid rgba(255, 59, 59, 0.3);
+            border-radius: 12px;
+            margin-bottom: 1rem;
+        }
+
+        .red-flag-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .red-flag-title {
+            font-weight: 700;
+            color: var(--accent-red);
+            margin-bottom: 0.25rem;
+        }
+
+        .red-flag-desc {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* Evidence links */
+        .evidence-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--accent-blue);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            background: rgba(59, 130, 246, 0.1);
+            border-radius: 8px;
+            font-size: 0.9rem;
+            margin: 0.25rem;
+            transition: all 0.2s;
+        }
+
+        .evidence-link:hover {
+            background: rgba(59, 130, 246, 0.2);
+        }
+
+        /* Findings Grid */
+        .findings-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .finding-card {
+            background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), transparent);
+            border: 1px solid rgba(168, 85, 247, 0.3);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .finding-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--accent-purple);
+            opacity: 0.3;
+            line-height: 1;
+        }
+
+        .finding-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin: 0.5rem 0;
+        }
+
+        .finding-detail {
+            color: var(--text-secondary);
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            border-top: 1px solid var(--border);
+            margin-top: 2rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .container {
+                padding: 1rem;
+            }
+
+            .stat-value {
+                font-size: 1.8rem;
+            }
+
+            .logo {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="bg-grid"></div>
+
+    <header class="header">
+        <div class="logo">GAMECOCK</div>
+        <div class="subtitle">SEC Filing Truth Finder | Deep Investigation Report</div>
+        <div class="classification">GAMESTOP (GME) | CIK 0001326380</div>
+    </header>
+
+    <div class="container">
+        <!-- Executive Summary Stats -->
+        <div class="stats-grid">
+            <div class="stat-card critical">
+                <div class="stat-label">Total Failed-to-Deliver</div>
+                <div class="stat-value">81.9M</div>
+                <div class="stat-change negative">Shares 2020-2025</div>
+            </div>
+            <div class="stat-card critical">
+                <div class="stat-label">January 2021 FTD</div>
+                <div class="stat-value">15.7M</div>
+                <div class="stat-change negative">Single month record</div>
+            </div>
+            <div class="stat-card warning">
+                <div class="stat-label">Pre-Squeeze FTD (Q4 2020)</div>
+                <div class="stat-value">22.6M</div>
+                <div class="stat-change negative">Oct-Dec buildup</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Anomaly Days Detected</div>
+                <div class="stat-value">18</div>
+                <div class="stat-change">&gt;2.5 std deviations</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Price After High FTD</div>
+                <div class="stat-value">+30.9%</div>
+                <div class="stat-change">Avg 5-day change</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Max Single Day FTD</div>
+                <div class="stat-value">3.21M</div>
+                <div class="stat-change">Oct 13, 2020</div>
+            </div>
+            <div class="stat-card" style="border-color: var(--accent-green); background: linear-gradient(135deg, rgba(0, 255, 136, 0.15), transparent);">
+                <div class="stat-label">Current FTD Status</div>
+                <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-green), #00cc6a); -webkit-background-clip: text;">ZERO</div>
+                <div class="stat-change" style="color: var(--accent-green);">Since Sept 2025</div>
+            </div>
+        </div>
+
+        <!-- Current State Section -->
+        <section class="section" style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.05), rgba(59, 130, 246, 0.05)); border-color: var(--accent-green);">
+            <h2 class="section-title">
+                <span class="icon" style="background: var(--accent-green);">📈</span>
+                Current State (January 2026)
+            </h2>
+
+            <!-- Zero FTD Banner -->
+            <div style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(0, 255, 136, 0.05)); border: 2px solid var(--accent-green); border-radius: 12px; padding: 1rem 1.5rem; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 1rem;">
+                <span style="font-size: 2rem;">✅</span>
+                <div>
+                    <div style="font-weight: 700; color: var(--accent-green); font-size: 1.1rem;">ZERO FTD RECORDS Since September 2025</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem;">SEC data shows no settlement failures for GME in the last 5 months of available data (Sept-Dec 2025 files). The settlement crisis has resolved.</div>
+                </div>
+            </div>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                GameStop has undergone a remarkable transformation from a struggling retailer to a cash-rich company with substantial financial flexibility.
+            </p>
+
+            <div class="stats-grid">
+                <div class="stat-card" style="border-color: var(--accent-green);">
+                    <div class="stat-label">Cash Position</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-green), #00cc6a); -webkit-background-clip: text;">$7.84B</div>
+                    <div class="stat-change">War chest accumulated</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-green);">
+                    <div class="stat-label">Total Assets</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-green), #00cc6a); -webkit-background-clip: text;">$10.5B</div>
+                    <div class="stat-change">Balance sheet strength</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-blue);">
+                    <div class="stat-label">Market Cap</div>
+                    <div class="stat-value">$10.2B</div>
+                    <div class="stat-change">@ $22.81/share</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-green);">
+                    <div class="stat-label">Q3 2025 Net Income</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-green), #00cc6a); -webkit-background-clip: text;">$77.1M</div>
+                    <div class="stat-change">Profitable quarter</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Short Interest</div>
+                    <div class="stat-value">16.1%</div>
+                    <div class="stat-change">of float</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Shares Outstanding</div>
+                    <div class="stat-value">448M</div>
+                    <div class="stat-change">Float: 407.7M</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px;">
+                    <h4 style="color: var(--accent-green); margin-bottom: 1rem;">💰 Financial Trajectory</h4>
+                    <table style="width: 100%; color: var(--text-secondary); font-size: 0.9rem;">
+                        <tr><td>Q1 2025 Revenue</td><td style="text-align: right;">$0.73B</td></tr>
+                        <tr><td>Q2 2025 Revenue</td><td style="text-align: right;">$0.97B</td></tr>
+                        <tr><td>Q3 2025 Revenue</td><td style="text-align: right;">$0.82B</td></tr>
+                        <tr><td>FY2024 Revenue</td><td style="text-align: right;">$3.82B</td></tr>
+                        <tr style="color: var(--accent-green); font-weight: 600;"><td>YTD Net Income</td><td style="text-align: right;">$290.5M</td></tr>
+                    </table>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px;">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">📊 Ownership Structure</h4>
+                    <table style="width: 100%; color: var(--text-secondary); font-size: 0.9rem;">
+                        <tr><td>Insider Ownership</td><td style="text-align: right;">8.9%</td></tr>
+                        <tr><td>Institutional</td><td style="text-align: right;">39.6%</td></tr>
+                        <tr><td>Retail/Other</td><td style="text-align: right;">~51.5%</td></tr>
+                        <tr><td>52-Week High</td><td style="text-align: right;">$35.81</td></tr>
+                        <tr><td>52-Week Low</td><td style="text-align: right;">$19.93</td></tr>
+                    </table>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px;">
+                    <h4 style="color: var(--accent-purple); margin-bottom: 1rem;">📋 Recent SEC Filings</h4>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary);">
+                        <div style="margin-bottom: 0.5rem;"><span style="color: var(--accent-blue);">Jan 26, 2026</span> - Form 4 (Insider)</div>
+                        <div style="margin-bottom: 0.5rem;"><span style="color: var(--accent-blue);">Jan 23, 2026</span> - 13G/A Amendment</div>
+                        <div style="margin-bottom: 0.5rem;"><span style="color: var(--accent-blue);">Jan 21, 2026</span> - 13D/A (RC Ventures)</div>
+                        <div style="margin-bottom: 0.5rem;"><span style="color: var(--accent-blue);">Jan 8, 2026</span> - 8-K Material Event</div>
+                        <div style="margin-bottom: 0.5rem;"><span style="color: var(--accent-blue);">Dec 9, 2025</span> - 10-Q (Q3 Report)</div>
+                        <div><span style="color: var(--accent-blue);">Oct 7, 2025</span> - 424B2 (Prospectus)</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Key Findings -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">!</span>
+                Critical Findings (Historical)
+            </h2>
+            <div class="findings-grid">
+                <div class="finding-card">
+                    <div class="finding-number">01</div>
+                    <div class="finding-title">Massive FTD Accumulation Before Squeeze</div>
+                    <div class="finding-detail">22.6 million shares failed to deliver in Q4 2020, creating unprecedented settlement pressure leading into January 2021.</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-number">02</div>
+                    <div class="finding-title">FTD Spikes Preceded Price Surges</div>
+                    <div class="finding-detail">High FTD days correlated with 30.9% average price increases within 5 trading days, suggesting forced covering events.</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-number">03</div>
+                    <div class="finding-title">January 26-28 Critical Window</div>
+                    <div class="finding-detail">5+ million shares failed in 3 consecutive days (Jan 26-28), coinciding with the peak price action and trading restrictions.</div>
+                </div>
+                <div class="finding-card">
+                    <div class="finding-number">04</div>
+                    <div class="finding-title">Statistical Anomalies Cluster</div>
+                    <div class="finding-detail">18 days exceeded 2.5 standard deviations from the mean, with the highest at 9.4 std dev (Oct 13, 2020).</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- FTD Chart -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">📊</span>
+                FTD Volume Timeline
+            </h2>
+            <div class="chart-container">
+                <canvas id="ftdChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Red Flags -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">🚩</span>
+                Red Flags Identified
+            </h2>
+
+            <div class="red-flag">
+                <div class="red-flag-icon">⚠️</div>
+                <div>
+                    <div class="red-flag-title">Anomalous FTD Concentration</div>
+                    <div class="red-flag-desc">81.9 million shares failed to deliver over 554 trading days, with 18 statistical anomalies. The top 20 FTD days account for a disproportionate share of total failures, suggesting episodic settlement stress rather than normal market operations.</div>
+                </div>
+            </div>
+
+            <div class="red-flag">
+                <div class="red-flag-icon">⚠️</div>
+                <div>
+                    <div class="red-flag-title">Pre-Squeeze Settlement Failure Buildup</div>
+                    <div class="red-flag-desc">From October to December 2020, GME accumulated 22.6M FTD shares—nearly 28% of the entire 5-year total—in just 3 months. This pattern is consistent with excessive short selling exceeding available shares.</div>
+                </div>
+            </div>
+
+            <div class="red-flag">
+                <div class="red-flag-icon">⚠️</div>
+                <div>
+                    <div class="red-flag-title">T+35 Settlement Pressure Correlation</div>
+                    <div class="red-flag-desc">FTD spikes from late December 2020 would require settlement by late January 2021—precisely when the squeeze occurred. Reg SHO close-out requirements may have contributed to forced buying pressure.</div>
+                </div>
+            </div>
+
+            <div class="red-flag">
+                <div class="red-flag-icon">⚠️</div>
+                <div>
+                    <div class="red-flag-title">Price-FTD Divergence Pattern</div>
+                    <div class="red-flag-desc">Negative correlation (-0.25) between FTD volume and price suggests FTDs accumulated during price declines, potentially indicating aggressive short selling during downtrends.</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Timeline -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">📅</span>
+                Critical Events Timeline
+            </h2>
+
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-date">August 31, 2020</div>
+                    <div class="timeline-title">Ryan Cohen Discloses 9% Stake</div>
+                    <div class="timeline-desc">RC Ventures files 13D revealing major position in GameStop</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">September 22, 2020</div>
+                    <div class="timeline-title">Second Highest FTD Day</div>
+                    <div class="timeline-desc">2.66M shares fail to deliver at $8.75 per share</div>
+                    <div class="timeline-ftd">FTD: 2,655,764 shares</div>
+                </div>
+
+                <div class="timeline-item critical">
+                    <div class="timeline-date">October 13, 2020</div>
+                    <div class="timeline-title">RECORD FTD DAY</div>
+                    <div class="timeline-desc">3.21M shares fail—highest single day in dataset (Z-score: 9.40)</div>
+                    <div class="timeline-ftd">FTD: 3,210,148 shares @ $11.80</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">November 16, 2020</div>
+                    <div class="timeline-title">Cohen Increases Stake to 12.9%</div>
+                    <div class="timeline-desc">Amended 13D filing shows increased conviction</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">December 2-7, 2020</div>
+                    <div class="timeline-title">FTD Cluster Event</div>
+                    <div class="timeline-desc">5 consecutive days with 1M+ FTD shares</div>
+                    <div class="timeline-ftd">FTD: ~5.6M shares total</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">January 11, 2021</div>
+                    <div class="timeline-title">Ryan Cohen Joins Board</div>
+                    <div class="timeline-desc">8-K filed announcing 3 new board members from RC Ventures</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">January 19-21, 2021</div>
+                    <div class="timeline-title">Pre-Squeeze FTD Surge</div>
+                    <div class="timeline-desc">Nearly 4M shares fail in 3 days as price begins climbing</div>
+                    <div class="timeline-ftd">FTD: 3,945,132 shares</div>
+                </div>
+
+                <div class="timeline-item critical">
+                    <div class="timeline-date">January 26, 2021</div>
+                    <div class="timeline-title">T+35 Settlement Pressure Peak</div>
+                    <div class="timeline-desc">December FTDs due for close-out. Stock at $147. 2.1M new FTDs.</div>
+                    <div class="timeline-ftd">FTD: 2,099,572 shares @ $76.79</div>
+                </div>
+
+                <div class="timeline-item critical">
+                    <div class="timeline-date">January 27, 2021</div>
+                    <div class="timeline-title">All-Time High: $483</div>
+                    <div class="timeline-desc">Stock reaches peak intraday. 2M additional shares fail.</div>
+                    <div class="timeline-ftd">FTD: 1,972,862 shares @ $147.98</div>
+                </div>
+
+                <div class="timeline-item critical">
+                    <div class="timeline-date">January 28, 2021</div>
+                    <div class="timeline-title">Trading Restrictions Imposed</div>
+                    <div class="timeline-desc">Multiple brokers restrict buying. Stock crashes 44%. Over 1M FTDs at $347 average.</div>
+                    <div class="timeline-ftd">FTD: 1,032,986 shares @ $347.51</div>
+                </div>
+
+                <div class="timeline-item">
+                    <div class="timeline-date">February 18, 2021</div>
+                    <div class="timeline-title">Congressional Hearing</div>
+                    <div class="timeline-desc">House Financial Services Committee holds hearing on GameStop trading</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Top FTD Days Table -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">📋</span>
+                Top 20 FTD Days
+            </h2>
+
+            <table class="data-table">
+                <thead>
+                    <tr>
+                        <th>Rank</th>
+                        <th>Date</th>
+                        <th>Failed Shares</th>
+                        <th>Price</th>
+                        <th>Z-Score</th>
+                        <th>Notes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr class="highlight">
+                        <td>1</td>
+                        <td>Oct 13, 2020</td>
+                        <td class="quantity">3,210,148</td>
+                        <td class="price">$11.80</td>
+                        <td>9.40</td>
+                        <td>Record day - 9.4 std deviations</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td>Sep 22, 2020</td>
+                        <td class="quantity">2,655,764</td>
+                        <td class="price">$8.75</td>
+                        <td>7.70</td>
+                        <td>Pre-Cohen announcement</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>3</td>
+                        <td>Jan 26, 2021</td>
+                        <td class="quantity">2,099,572</td>
+                        <td class="price">$76.79</td>
+                        <td>5.99</td>
+                        <td>Day before ATH</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>4</td>
+                        <td>Jan 27, 2021</td>
+                        <td class="quantity">1,972,862</td>
+                        <td class="price">$147.98</td>
+                        <td>5.60</td>
+                        <td>All-time high day</td>
+                    </tr>
+                    <tr>
+                        <td>5</td>
+                        <td>Dec 3, 2020</td>
+                        <td class="quantity">1,787,191</td>
+                        <td class="price">$16.58</td>
+                        <td>5.03</td>
+                        <td>T+35 → Jan 7</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>6</td>
+                        <td>Jan 19, 2021</td>
+                        <td class="quantity">1,498,576</td>
+                        <td class="price">$35.50</td>
+                        <td>4.15</td>
+                        <td>Pre-squeeze surge begins</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>7</td>
+                        <td>Jan 21, 2021</td>
+                        <td class="quantity">1,438,994</td>
+                        <td class="price">$39.12</td>
+                        <td>3.96</td>
+                        <td>Week before ATH</td>
+                    </tr>
+                    <tr>
+                        <td>8</td>
+                        <td>May 1, 2020</td>
+                        <td class="quantity">1,380,982</td>
+                        <td class="price">$5.73</td>
+                        <td>3.78</td>
+                        <td>COVID era low</td>
+                    </tr>
+                    <tr>
+                        <td>9</td>
+                        <td>Aug 5, 2021</td>
+                        <td class="quantity">1,316,894</td>
+                        <td class="price">$146.80</td>
+                        <td>3.59</td>
+                        <td>Post-squeeze spike</td>
+                    </tr>
+                    <tr>
+                        <td>10</td>
+                        <td>Dec 2, 2020</td>
+                        <td class="quantity">1,061,397</td>
+                        <td class="price">$15.80</td>
+                        <td>2.80</td>
+                        <td>T+35 → Jan 6</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>13</td>
+                        <td>Jan 28, 2021</td>
+                        <td class="quantity">1,032,986</td>
+                        <td class="price">$347.51</td>
+                        <td>2.72</td>
+                        <td>Trading halted day</td>
+                    </tr>
+                    <tr class="highlight">
+                        <td>15</td>
+                        <td>Jan 20, 2021</td>
+                        <td class="quantity">1,007,562</td>
+                        <td class="price">$39.36</td>
+                        <td>2.64</td>
+                        <td>Squeeze week</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- SEC Filing Evidence -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">📄</span>
+                SEC Filing Evidence
+            </h2>
+
+            <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">
+                Direct links to official SEC EDGAR filings supporting this investigation:
+            </p>
+
+            <div style="display: flex; flex-wrap: wrap; gap: 0.5rem;">
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=&dateb=&owner=&count=40" class="evidence-link" target="_blank">
+                    📁 All GME Filings
+                </a>
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=13D&dateb=&owner=include&count=40" class="evidence-link" target="_blank">
+                    📊 13D Beneficial Ownership
+                </a>
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=4&dateb=&owner=only&count=40" class="evidence-link" target="_blank">
+                    👤 Form 4 Insider Trades
+                </a>
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=8-K&dateb=&owner=include&count=40" class="evidence-link" target="_blank">
+                    📣 8-K Material Events
+                </a>
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=10-K&dateb=&owner=include&count=40" class="evidence-link" target="_blank">
+                    📘 10-K Annual Reports
+                </a>
+                <a href="https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001326380&type=13F&dateb=&owner=include&count=40" class="evidence-link" target="_blank">
+                    🏦 13F Institutional Holdings
+                </a>
+                <a href="https://www.sec.gov/data/foiadocsfailsdatahtm" class="evidence-link" target="_blank">
+                    📉 SEC FTD Data Files
+                </a>
+                <a href="https://www.sec.gov/files/staff-report-equity-options-market-struction-702021.pdf" class="evidence-link" target="_blank">
+                    📋 SEC Staff Report (Oct 2021)
+                </a>
+            </div>
+        </section>
+
+        <!-- WARRANT DIVIDEND SECTION -->
+        <section class="section" style="background: linear-gradient(135deg, rgba(251, 191, 36, 0.15), rgba(255, 59, 59, 0.05)); border: 2px solid var(--accent-yellow);">
+            <h2 class="section-title">
+                <span class="icon" style="background: var(--accent-yellow); color: black;">⚡</span>
+                BREAKING: Warrant Dividend (October 2025)
+            </h2>
+
+            <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; margin-bottom: 1.5rem;">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    On <strong style="color: white;">October 7, 2025</strong>, GameStop distributed <strong style="color: var(--accent-yellow);">warrants</strong> to all shareholders—a rarely-used corporate action that creates significant optionality.
+                </p>
+                <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                    <a href="https://investor.gamestop.com/news-releases/news-details/2025/GameStop-Announces-the-Distribution-of-Warrants-to-Shareholders/default.aspx" class="evidence-link" target="_blank">📢 Press Release</a>
+                    <a href="https://www.sec.gov/Archives/edgar/data/1326380/000132638025000091/gme-20251007.htm" class="evidence-link" target="_blank">📄 8-K Filing</a>
+                    <a href="https://www.sec.gov/Archives/edgar/data/1326380/000132638025000084/" class="evidence-link" target="_blank">📋 8-A12B Registration</a>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card" style="border-color: var(--accent-yellow);">
+                    <div class="stat-label">Warrants Issued</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-yellow), #f59e0b); -webkit-background-clip: text;">59.15M</div>
+                    <div class="stat-change">1 per 10 shares held</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-yellow);">
+                    <div class="stat-label">Exercise Price</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-yellow), #f59e0b); -webkit-background-clip: text;">$32.00</div>
+                    <div class="stat-change">40% premium to current</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-green);">
+                    <div class="stat-label">Potential Proceeds</div>
+                    <div class="stat-value" style="background: linear-gradient(135deg, var(--accent-green), #00cc6a); -webkit-background-clip: text;">$1.9B</div>
+                    <div class="stat-change">If fully exercised</div>
+                </div>
+                <div class="stat-card" style="border-color: var(--accent-red);">
+                    <div class="stat-label">Expiration</div>
+                    <div class="stat-value">Oct 2026</div>
+                    <div class="stat-change">~9 months remaining</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; margin-top: 1.5rem;">
+                <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px;">
+                    <h4 style="color: var(--accent-yellow); margin-bottom: 1rem;">📊 Warrant Details</h4>
+                    <table style="width: 100%; color: var(--text-secondary); font-size: 0.9rem;">
+                        <tr><td>Ticker</td><td style="text-align: right; color: white; font-weight: 600;">GME WS (NYSE)</td></tr>
+                        <tr><td>Record Date</td><td style="text-align: right;">Oct 3, 2025</td></tr>
+                        <tr><td>Trading Started</td><td style="text-align: right;">Oct 8, 2025</td></tr>
+                        <tr><td>Exercise Type</td><td style="text-align: right;">Cash only</td></tr>
+                        <tr><td>Convertible Note Holders</td><td style="text-align: right;">Also received</td></tr>
+                    </table>
+                </div>
+                <div style="background: rgba(0,0,0,0.2); padding: 1.5rem; border-radius: 12px;">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🎯 Strategic Implications</h4>
+                    <ul style="color: var(--text-secondary); font-size: 0.9rem; padding-left: 1.2rem;">
+                        <li><strong style="color: var(--accent-green);">Bull case:</strong> Creates buying pressure if stock approaches $32</li>
+                        <li><strong style="color: var(--accent-red);">Bear case:</strong> Dilution risk if exercised (59M new shares)</li>
+                        <li><strong style="color: var(--accent-yellow);">Cash optionality:</strong> Additional $1.9B if stock rallies</li>
+                        <li><strong style="color: var(--accent-purple);">Short squeeze potential:</strong> Warrants + short interest = volatility</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(255, 59, 59, 0.2), transparent); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 59, 59, 0.3);">
+                    <h4 style="color: var(--accent-red); margin-bottom: 1rem;">⚠️ FTD Data Gap</h4>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Warrant FTD data (GME WS) will be available in SEC files starting <strong style="color: white;">~February 2026</strong> due to 30-day reporting lag.
+                        This is a critical data point to monitor—warrant settlement failures could signal new short positioning.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Ryan Cohen & Activist Transformation -->
+        <section class="section" style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), transparent); border-color: var(--accent-purple);">
+            <h2 class="section-title">
+                <span class="icon" style="background: var(--accent-purple);">👤</span>
+                Ryan Cohen & The Transformation
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 2rem;">
+                <div>
+                    <h4 style="color: var(--accent-purple); margin-bottom: 1rem;">RC Ventures Holdings</h4>
+                    <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; margin-bottom: 1rem;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">Initial Stake (Aug 2020)</span>
+                            <span style="color: var(--accent-purple); font-weight: 600;">9.0%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">Increased (Nov 2020)</span>
+                            <span style="color: var(--accent-purple); font-weight: 600;">12.9%</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                            <span style="color: var(--text-secondary);">Board Appointment</span>
+                            <span style="color: var(--accent-purple); font-weight: 600;">Jan 11, 2021</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-secondary);">CEO Appointment</span>
+                            <span style="color: var(--accent-purple); font-weight: 600;">2023</span>
+                        </div>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.9rem;">
+                        Cohen's Chewy playbook: Build customer loyalty through e-commerce excellence,
+                        leverage brand recognition, and accumulate strategic cash reserves for opportunistic moves.
+                    </p>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent-yellow); margin-bottom: 1rem;">Strategic Moves</h4>
+                    <div style="font-size: 0.9rem; color: var(--text-secondary);">
+                        <div style="padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--accent-yellow);">ATM Offerings:</strong> Raised billions through at-the-market share sales during price spikes, converting meme stock volatility into permanent capital.
+                        </div>
+                        <div style="padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--accent-yellow);">S-3ASR Filing (Oct 2025):</strong> Shelf registration for potential future capital raises, maintaining financial flexibility.
+                        </div>
+                        <div style="padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 8px; margin-bottom: 0.5rem;">
+                            <strong style="color: var(--accent-yellow);">Cost Reduction:</strong> Aggressive store closures and workforce optimization to stem losses.
+                        </div>
+                        <div style="padding: 0.75rem; background: rgba(251, 191, 36, 0.1); border-radius: 8px;">
+                            <strong style="color: var(--accent-yellow);">Cash Accumulation:</strong> $7.84B war chest provides runway for strategic pivots.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Macro/Micro Analysis -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">🌍</span>
+                Macro & Micro Environment
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div style="background: linear-gradient(135deg, rgba(255, 59, 59, 0.1), transparent); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(255, 59, 59, 0.2);">
+                    <h4 style="color: var(--accent-red); margin-bottom: 1rem;">🎮 Industry Headwinds</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>Digital game downloads dominating (Steam, PlayStation Store, Xbox)</li>
+                        <li>Physical game disc sales declining ~10-15% annually</li>
+                        <li>Console cycle maturation (PS5/Xbox Series X mid-cycle)</li>
+                        <li>Used game market shrinking with digital licenses</li>
+                        <li>Competitor pressure (Amazon, Best Buy, Walmart)</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(0, 255, 136, 0.1), transparent); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(0, 255, 136, 0.2);">
+                    <h4 style="color: var(--accent-green); margin-bottom: 1rem;">💪 Competitive Advantages</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li><strong style="color: var(--accent-green);">$7.84B cash</strong> - Massive optionality</li>
+                        <li>Zero long-term debt - Clean balance sheet</li>
+                        <li>Cult-like retail investor loyalty</li>
+                        <li>Brand recognition in gaming community</li>
+                        <li>3,000+ retail locations for omnichannel</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), transparent); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(59, 130, 246, 0.2);">
+                    <h4 style="color: var(--accent-blue); margin-bottom: 1rem;">🔮 Strategic Options</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem; font-size: 0.9rem;">
+                        <li>Acquisitions (gaming studios, tech companies)</li>
+                        <li>Web3/NFT gaming marketplace (attempted)</li>
+                        <li>E-commerce expansion beyond gaming</li>
+                        <li>Strategic investment portfolio</li>
+                        <li>Share buybacks (undervalued if cash > market cap)</li>
+                    </ul>
+                </div>
+                <div style="background: linear-gradient(135deg, rgba(168, 85, 247, 0.1), transparent); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(168, 85, 247, 0.2);">
+                    <h4 style="color: var(--accent-purple); margin-bottom: 1rem;">⚖️ Bull vs Bear Case</h4>
+                    <div style="font-size: 0.9rem;">
+                        <div style="color: var(--accent-green); margin-bottom: 0.5rem;">
+                            <strong>Bulls:</strong> Cash exceeds market cap. Cohen has track record. Retail army loyal. Optionality unlimited.
+                        </div>
+                        <div style="color: var(--accent-red);">
+                            <strong>Bears:</strong> Core business declining. No clear pivot. Revenue shrinking. Multiple compression justified.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Key Financial Metrics Chart -->
+            <div style="margin-top: 2rem;">
+                <h4 style="color: var(--text-secondary); margin-bottom: 1rem;">Quarterly Revenue Trend</h4>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- The Big Picture -->
+        <section class="section" style="background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(168, 85, 247, 0.1)); border: 2px solid var(--accent-blue);">
+            <h2 class="section-title">
+                <span class="icon" style="background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));">🔍</span>
+                The Big Picture: What The Data Reveals
+            </h2>
+
+            <div style="font-size: 1.1rem; line-height: 1.8; color: var(--text-secondary);">
+                <p style="margin-bottom: 1.5rem;">
+                    <span style="color: var(--accent-red); font-weight: 700;">The 2021 GameStop squeeze wasn't random chaos</span>—it was the predictable result of
+                    systemic settlement failures meeting coordinated retail buying pressure. Our analysis of <strong style="color: white;">81.9 million failed-to-deliver shares</strong>
+                    reveals a clear pattern: massive FTD accumulation throughout Q4 2020 created a powder keg that exploded when T+35 settlement deadlines
+                    converged with retail FOMO in late January 2021.
+                </p>
+
+                <p style="margin-bottom: 1.5rem;">
+                    The <span style="color: var(--accent-yellow); font-weight: 700;">30.9% average price increase</span> within 5 days of high-FTD events suggests
+                    forced covering dynamics—when shorts must buy to settle their failures, prices spike. This isn't conspiracy theory; it's market mechanics
+                    documented in SEC data files.
+                </p>
+
+                <p style="margin-bottom: 1.5rem;">
+                    <span style="color: var(--accent-green); font-weight: 700;">Fast forward to 2026:</span> GameStop sits on <strong style="color: white;">$7.84 billion in cash</strong>
+                    with <strong style="color: white;">no debt</strong>. The meme stock mania that nearly bankrupted hedge funds also funded GameStop's transformation.
+                    Ryan Cohen converted volatility into capital through ATM offerings, building a fortress balance sheet from the very mechanism that was
+                    supposed to destroy the company.
+                </p>
+
+                <p style="margin-bottom: 1.5rem;">
+                    <span style="color: var(--accent-green); font-weight: 700;">The settlement crisis is over—on the common stock.</span> SEC data shows <strong style="color: white;">zero FTD records</strong>
+                    for GME since September 2025. Whether through improved market mechanics, reduced short activity, or successful regulatory pressure,
+                    the systemic settlement failures that fueled the 2021 squeeze have resolved.
+                </p>
+
+                <p style="margin-bottom: 1.5rem;">
+                    <span style="color: var(--accent-yellow); font-weight: 700;">But the game has evolved.</span> In October 2025, GameStop dropped a bombshell:
+                    <strong style="color: white;">59 million warrants</strong> distributed to shareholders at a <strong style="color: white;">$32 strike price</strong>.
+                    This creates a new battlefield—warrant FTD data won't be available until February 2026, leaving a critical information gap.
+                    If shorts are positioning against the warrants, we won't see the settlement data for weeks.
+                </p>
+
+                <p style="margin-bottom: 1.5rem;">
+                    The remaining <span style="color: var(--accent-red); font-weight: 700;">16.1% short interest</span> indicates skeptics remain.
+                    The <span style="color: var(--accent-purple); font-weight: 700;">51.5% retail ownership</span> shows the diamond hands haven't left.
+                    And now <span style="color: var(--accent-yellow); font-weight: 700;">59 million warrants</span> add a new variable to the equation.
+                    The battlefield has evolved, but the war continues.
+                </p>
+
+                <div style="background: rgba(0,0,0,0.3); padding: 1.5rem; border-radius: 12px; border-left: 4px solid var(--accent-blue);">
+                    <p style="margin: 0; font-style: italic; color: var(--text-primary);">
+                        "The market can remain irrational longer than you can remain solvent." — John Maynard Keynes
+                    </p>
+                    <p style="margin: 0.5rem 0 0 0; font-size: 0.9rem;">
+                        In GameStop's case, the irrationality became the solvency.
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Methodology -->
+        <section class="section">
+            <h2 class="section-title">
+                <span class="icon">🔬</span>
+                Analysis Methodology
+            </h2>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem;">
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Data Sources</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                        <li>SEC EDGAR filing database (CIK 0001326380)</li>
+                        <li>SEC Fails-to-Deliver data (2020-2025)</li>
+                        <li>Yahoo Finance historical price data</li>
+                        <li>137 FTD data files analyzed</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Statistical Methods</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                        <li>Z-score anomaly detection (threshold: 2.5σ)</li>
+                        <li>Pearson correlation (FTD vs Price)</li>
+                        <li>T+35 settlement pressure calculation</li>
+                        <li>5-day forward price change analysis</li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 style="color: var(--accent-blue); margin-bottom: 0.5rem;">Tools Used</h4>
+                    <ul style="color: var(--text-secondary); padding-left: 1.5rem;">
+                        <li>GAMECOCK SEC Filing Truth Finder</li>
+                        <li>Python pandas, numpy, matplotlib</li>
+                        <li>Chart.js visualization</li>
+                        <li>SEC EDGAR API</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <footer class="footer">
+        <p>Generated by <strong>GAMECOCK</strong> - SEC Filing Truth Finder</p>
+        <p style="margin-top: 0.5rem;">Analysis Date: <span id="analysisDate"></span> | FTD Data: 2020-01-02 to 2025-08-27</p>
+        <p style="margin-top: 0.5rem; font-size: 0.75rem; color: #6b7280;">
+            Note: SEC FTD data is released ~30 days after reporting period. GME has <strong style="color: #00ff88;">zero FTD records</strong> in Sept-Dec 2025 files — settlement issues resolved.
+        </p>
+        <p style="margin-top: 1rem; font-size: 0.8rem;">
+            This report is for educational and research purposes only. Not financial advice.<br>
+            All data sourced from public SEC filings and official government databases.
+        </p>
+    </footer>
+
+    <script>
+        // Set analysis date
+        document.getElementById('analysisDate').textContent = new Date().toLocaleDateString();
+
+        // FTD Chart Data (key points)
+        const ftdData = [
+            { date: '2020-05-01', ftd: 1380982, price: 5.73 },
+            { date: '2020-07-21', ftd: 1047676, price: 3.85 },
+            { date: '2020-09-02', ftd: 917224, price: 7.65 },
+            { date: '2020-09-22', ftd: 2655764, price: 8.75 },
+            { date: '2020-09-23', ftd: 1004290, price: 10.56 },
+            { date: '2020-10-13', ftd: 3210148, price: 11.80 },
+            { date: '2020-10-14', ftd: 1020779, price: 11.88 },
+            { date: '2020-12-02', ftd: 1061397, price: 15.80 },
+            { date: '2020-12-03', ftd: 1787191, price: 16.58 },
+            { date: '2020-12-04', ftd: 999475, price: 16.12 },
+            { date: '2020-12-07', ftd: 1002379, price: 16.90 },
+            { date: '2021-01-19', ftd: 1498576, price: 35.50 },
+            { date: '2021-01-20', ftd: 1007562, price: 39.36 },
+            { date: '2021-01-21', ftd: 1438994, price: 39.12 },
+            { date: '2021-01-26', ftd: 2099572, price: 76.79 },
+            { date: '2021-01-27', ftd: 1972862, price: 147.98 },
+            { date: '2021-01-28', ftd: 1032986, price: 347.51 },
+            { date: '2021-06-08', ftd: 462852, price: 300.00 },
+            { date: '2021-08-05', ftd: 1316894, price: 146.80 },
+            { date: '2022-06-03', ftd: 673554, price: 133.70 },
+            { date: '2023-03-22', ftd: 624571, price: 22.00 },
+        ];
+
+        const ctx = document.getElementById('ftdChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ftdData.map(d => d.date),
+                datasets: [
+                    {
+                        label: 'FTD Shares',
+                        data: ftdData.map(d => d.ftd),
+                        backgroundColor: ftdData.map(d =>
+                            d.date.startsWith('2021-01') ? 'rgba(255, 59, 59, 0.8)' : 'rgba(255, 59, 59, 0.4)'
+                        ),
+                        borderColor: 'rgba(255, 59, 59, 1)',
+                        borderWidth: 1,
+                        yAxisID: 'y',
+                    },
+                    {
+                        label: 'Stock Price',
+                        data: ftdData.map(d => d.price),
+                        type: 'line',
+                        borderColor: 'rgba(0, 255, 136, 1)',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 4,
+                        pointBackgroundColor: 'rgba(0, 255, 136, 1)',
+                        fill: true,
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    legend: {
+                        labels: {
+                            color: '#9ca3af'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                if (context.dataset.label === 'FTD Shares') {
+                                    return 'FTD: ' + context.raw.toLocaleString() + ' shares';
+                                } else {
+                                    return 'Price: $' + context.raw.toFixed(2);
+                                }
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: {
+                            color: '#6b7280',
+                            maxRotation: 45,
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.05)'
+                        }
+                    },
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'FTD Shares',
+                            color: '#ff3b3b'
+                        },
+                        ticks: {
+                            color: '#ff3b3b',
+                            callback: function(value) {
+                                return (value / 1000000).toFixed(1) + 'M';
+                            }
+                        },
+                        grid: {
+                            color: 'rgba(255,255,255,0.05)'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Price ($)',
+                            color: '#00ff88'
+                        },
+                        ticks: {
+                            color: '#00ff88',
+                            callback: function(value) {
+                                return '$' + value;
+                            }
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        }
+                    }
+                }
+            }
+        });
+
+        // Revenue Chart
+        const revenueCtx = document.getElementById('revenueChart').getContext('2d');
+        new Chart(revenueCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Q1 2024', 'Q2 2024', 'Q3 2024', 'Q4 2024', 'Q1 2025', 'Q2 2025', 'Q3 2025'],
+                datasets: [
+                    {
+                        label: 'Revenue ($B)',
+                        data: [0.88, 0.80, 0.86, 1.28, 0.73, 0.97, 0.82],
+                        backgroundColor: 'rgba(59, 130, 246, 0.6)',
+                        borderColor: 'rgba(59, 130, 246, 1)',
+                        borderWidth: 1,
+                    },
+                    {
+                        label: 'Net Income ($M)',
+                        data: [-32.3, -17.5, 1.2, 63.1, 44.8, 168.6, 77.1],
+                        type: 'line',
+                        borderColor: 'rgba(0, 255, 136, 1)',
+                        backgroundColor: 'rgba(0, 255, 136, 0.1)',
+                        borderWidth: 2,
+                        pointRadius: 5,
+                        pointBackgroundColor: function(context) {
+                            return context.raw >= 0 ? 'rgba(0, 255, 136, 1)' : 'rgba(255, 59, 59, 1)';
+                        },
+                        yAxisID: 'y1',
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        labels: { color: '#9ca3af' }
+                    }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: '#6b7280' },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y: {
+                        position: 'left',
+                        title: { display: true, text: 'Revenue ($B)', color: '#3b82f6' },
+                        ticks: {
+                            color: '#3b82f6',
+                            callback: function(value) { return '$' + value.toFixed(1) + 'B'; }
+                        },
+                        grid: { color: 'rgba(255,255,255,0.05)' }
+                    },
+                    y1: {
+                        position: 'right',
+                        title: { display: true, text: 'Net Income ($M)', color: '#00ff88' },
+                        ticks: {
+                            color: '#00ff88',
+                            callback: function(value) { return '$' + value + 'M'; }
+                        },
+                        grid: { drawOnChartArea: false }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
