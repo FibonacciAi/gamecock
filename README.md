@@ -139,6 +139,8 @@ This tool is for **educational and research purposes only**.
 
 ## Credits
 
+Created by [@D74169](https://x.com/D74169)
+
 Inspired by [SECthingv2](https://github.com/artpersonnft/SECthingv2) by artpersonnft.
 
-Enhanced for deep financial forensics and truth-finding.
+Enhanced for deep financial forensics and truth-finding with Claude.
